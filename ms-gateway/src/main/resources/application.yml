@@ -1,0 +1,47 @@
+server:
+  port: 7777
+
+logging:
+  level:
+    org:
+      springframework:
+        cloud:
+          gateway: TRACE
+eureka:
+  client:
+    register-with-eureka: true
+    fetch-registry: true
+    service-url:
+      defaultZone: http://localhost:8888/eureka
+
+spring:
+  application:
+    name: ms-gateway
+
+  cloud:
+    gateway:
+      routes:
+        - id: route1
+          predicates:
+            - Path=/e-health/ordonnance/**
+
+          filters:
+            - RewritePath=/service-ordonnance/(?<s>.*), /${s}
+            - name: CircuitBreaker
+              args:
+                name: FallBack-ordonnance
+                fallbackuri: forward:/defaultOrdonnances
+
+          uri: lb://ms-ordonnance
+
+        - id: route2
+          predicates:
+            - Path=/e-health/patient/**
+
+          filters:
+            - RewritePath=/patient/(?<s>.*), /${s}
+
+          uri: lb://ms-patient
+
+
+
